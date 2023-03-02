@@ -19,6 +19,8 @@ lazy val error = (project in file("."))
   .aggregate(
     errorCore.jvm,
     errorCore.js,
+    errorSpire.jvm,
+    errorSpire.js,
   )
   .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
