@@ -32,9 +32,6 @@ lazy val errorCore = (crossProject(JSPlatform, JVMPlatform) in file("error-core"
   .settings(commonSettings)
   .settings(
     name := "error-core",
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % catsVersion,
-    ),
   )
 
 lazy val errorSpire = (crossProject(JSPlatform, JVMPlatform) in file("error-spire"))
@@ -43,6 +40,7 @@ lazy val errorSpire = (crossProject(JSPlatform, JVMPlatform) in file("error-spir
   .settings(
     name := "error-spire",
     libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-core" % catsVersion,
       "org.typelevel" %%% "spire" % spireVersion,
     ),
   )
