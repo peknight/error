@@ -1,11 +1,13 @@
-package com.peknight.error.numeric
+package com.peknight.error.spire.math
 
 import cats.Show
 import cats.syntax.show.*
+import com.peknight.error.{Error, ValueError}
 import spire.math.*
 import spire.math.interval.{Closed, Open}
 
-case class IntervalError[N : Show](value: N, label: String, interval: Interval[N]) extends NumericError[N]:
+case class IntervalError[F[_], N](value: F[N], label: String, interval: Interval[N])(using Show[F[N]], Show[N])
+  extends ValueError[F[N]]:
   def message: String = interval match
     case All() => s"$label(${value.show}) is not in an all interval? it's weird."
     case above @ Above(_, _) => above.lowerBound match
@@ -25,3 +27,5 @@ case class IntervalError[N : Show](value: N, label: String, interval: Interval[N
         s"$label should greater than or equal to ${lower.show} and less than or equal to ${upper.show}, but was ${value.show}"
     case Point(v) => s"$label should be ${v.show}, but was ${value.show}"
     case Empty() => s"$label(${value.show}) will never be in an empty interval"
+
+end IntervalError
