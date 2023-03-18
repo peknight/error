@@ -1,13 +1,7 @@
 package com.peknight.error.spire.math
 
-import com.peknight.error.EmptyError
-
-trait IntervalEmptyError extends EmptyError
+import com.peknight.error.std.EmptyError
 
 object IntervalEmptyError:
-  def apply(label0: String): IntervalEmptyError = new IntervalEmptyError:
-    def label: String = label0
-
-  def unapply(error: IntervalEmptyError): Some[String] = Some(error.label)
-
+  def apply(label: String): IntervalEmptyError = EmptyError(IntervalEmpty, label)
 end IntervalEmptyError

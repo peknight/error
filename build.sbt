@@ -33,7 +33,7 @@ lazy val errorCore = (crossProject(JSPlatform, JVMPlatform) in file("error-core"
   .settings(
     name := "error-core",
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-core" % catsVersion,
+      "com.peknight" %%% "generic-core" % pekGenericVersion,
     ),
   )
 
@@ -47,5 +47,5 @@ lazy val errorSpire = (crossProject(JSPlatform, JVMPlatform) in file("error-spir
     ),
   )
 
-val catsVersion = "2.9.0"
+val pekGenericVersion = "0.1.0-SNAPSHOT"
 val spireVersion = "0.18.0"

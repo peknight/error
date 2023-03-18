@@ -1,16 +1,10 @@
 package com.peknight.error.spire.math.interval
 
-import com.peknight.error.LabelledError
-
-trait UnboundError extends LabelledError:
-  def message: String = s"$label is unbound"
-end UnboundError
+import com.peknight.error.labelled.LabelledValueError
+import com.peknight.generic.tuple.syntax.label
 
 object UnboundError:
-  def apply(label0: String): UnboundError = new UnboundError:
-    def label: String = label0
-
-  def unapply(error: UnboundError): Some[String] = Some(error.label)
-
+  def apply(label: String): UnboundError =
+    LabelledValueError(Unbound, ().label(label))((_, _) => s"$label is unbound")
+  end apply
 end UnboundError
-

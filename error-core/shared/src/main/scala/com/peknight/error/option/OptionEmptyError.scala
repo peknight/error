@@ -1,15 +1,9 @@
 package com.peknight.error.option
 
-import com.peknight.error.EmptyError
-
-trait OptionEmptyError extends EmptyError
+import com.peknight.error.std.EmptyError
 
 object OptionEmptyError:
-  def apply(label0: String): OptionEmptyError = new OptionEmptyError:
-    def label: String = label0
-
-  def unapply(error: OptionEmptyError): Some[String] = Some(error.label)
-
+  def apply(label: String): OptionEmptyError = EmptyError(OptionEmpty, label)
 end OptionEmptyError
 
 
