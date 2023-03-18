@@ -1,6 +1,6 @@
 package com.peknight.error
 
-import cats.Monoid
+import cats.{Monoid, Show}
 import cats.data.NonEmptyList
 
 sealed trait Error extends Serializable derives CanEqual
@@ -35,5 +35,13 @@ object Error:
       case (Errors(xErrors), yError: StandardError[_, _]) =>Errors(xErrors.head, xErrors.tail :+ yError)
       case (xError: StandardError[_, _], Errors(yErrors)) => Errors(xError, yErrors.toList)
       case (xError: StandardError[_, _], yError: StandardError[_, _]) => Errors(xError, yError)
+  end given
+
+  given Show[Error] with
+    def show(error: Error): String =
+      error match
+        case EmptyError => "No error"
+        case StandardError(errorType, value, cause, errorShow) => s"${errorShow.show(errorType, value)} caused by ${show(cause)}"
+        case Errors(errors) => errors.toList.map(show).mkString("(", ", ", ")")
   end given
 end Error
