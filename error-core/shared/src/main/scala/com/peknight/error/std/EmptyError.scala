@@ -1,9 +1,14 @@
 package com.peknight.error.std
 
-import com.peknight.error.labelled.LabelledValueError
-import com.peknight.generic.tuple.syntax.label
+import com.peknight.error.Error.{NoError, StandardError}
 
 object EmptyError:
-  def apply[T <: Empty](errorType: T, label: String): EmptyError[T] =
-    LabelledValueError(errorType, ().label(label))((_, _) => s"$label is empty")
+  def apply[E <: Empty, Ext](errorType: E, label: String, ext: Ext, message: String): EmptyErrorT[E, Ext] =
+    StandardError(errorType, label, (), (), ext, message, NoError)
+
+  def apply[E <: Empty](errorType: E, label: String, message: String): EmptyError[E] =
+    StandardError(errorType, label, (), (), (), message, NoError)
+
+  def apply[E <: Empty](errorType: E, label: String)(using errorShow: EmptyErrorShow[E]): EmptyError[E] =
+    StandardError(errorType, label, (), (), (), errorShow.show(errorType, label, (), ()), NoError)
 end EmptyError
