@@ -1,9 +1,8 @@
 package com.peknight.error
 
-import com.peknight.error.std.{EmptyError, EmptyErrorShow, EmptyErrorT}
+import com.peknight.error.std.{EmptyError, EmptyErrorShow}
 
 package object collection:
-  type CollectionEmptyErrorT[Ext] = EmptyErrorT[CollectionEmpty, Ext]
   type CollectionEmptyError = EmptyError[CollectionEmpty]
   type CollectionEmptyErrorShow = EmptyErrorShow[CollectionEmpty]
 end collection

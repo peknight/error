@@ -1,3 +1,3 @@
 package com.peknight.error
 
-trait ErrorType
+trait ErrorType derives CanEqual
