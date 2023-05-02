@@ -47,5 +47,16 @@ lazy val errorSpire = (crossProject(JSPlatform, JVMPlatform) in file("error-spir
     ),
   )
 
+lazy val errorParse = (crossProject(JSPlatform, JVMPlatform) in file("error-parse"))
+  .dependsOn(errorCore)
+  .settings(commonSettings)
+  .settings(
+    name := "error-parse",
+    libraryDependencies ++= Seq(
+      "org.typelevel" %%% "cats-parse" % catsParseVersion,
+    ),
+  )
+
 val catsVersion = "2.9.0"
+val catsParseVersion = "0.3.9"
 val spireVersion = "0.18.0"
