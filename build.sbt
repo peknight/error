@@ -21,6 +21,8 @@ lazy val error = (project in file("."))
     errorCore.js,
     errorSpire.jvm,
     errorSpire.js,
+    errorParse.jvm,
+    errorParse.js,
   )
   .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
