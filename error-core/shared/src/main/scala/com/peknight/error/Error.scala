@@ -34,16 +34,14 @@ object Error:
       ).filter(_.nonEmpty).mkString(s"$errorType(", ", ", ")")
   end StandardError
 
-  case class Errors(errors: NonEmptyList[SingleError]) extends Error:
+  case class Errors(errors: NonEmptyList[StdError]) extends Error:
     override def toString: String = errors.toList.mkString("Errors(", ", ", ")")
   end Errors
 
   object Errors:
-    def apply(head: SingleError, tail: List[SingleError]): Errors = Errors(NonEmptyList(head, tail))
-    def apply(head: SingleError, tail: SingleError*): Errors = Errors(NonEmptyList.of(head, tail*))
+    def apply(head: StdError, tail: List[StdError]): Errors = Errors(NonEmptyList(head, tail))
+    def apply(head: StdError, tail: StdError*): Errors = Errors(NonEmptyList.of(head, tail*))
   end Errors
-
-  type SingleError = StandardError[_, _, _, _]
 
   def empty: Error = NoError
 
@@ -52,9 +50,9 @@ object Error:
                                                           cause: Error = NoError): Error =
     StandardError(errorType, label, actual, expect, message, ext, cause)
 
-  def apply(errors: NonEmptyList[SingleError]): Error = Errors(errors)
-  def apply(head: SingleError, tail: List[SingleError]): Error = Errors(head, tail)
-  def apply(head: SingleError, tail: SingleError*): Error = Errors(head, tail*)
+  def apply(errors: NonEmptyList[StdError]): Error = Errors(errors)
+  def apply(head: StdError, tail: List[StdError]): Error = Errors(head, tail)
+  def apply(head: StdError, tail: StdError*): Error = Errors(head, tail*)
 
   given Monoid[Error] with
     def empty: Error = NoError
@@ -62,9 +60,9 @@ object Error:
       case (NoError, yError) => yError
       case (xError, NoError) => xError
       case (Errors(xErrors), Errors(yErrors)) => Errors(xErrors ++ yErrors.toList)
-      case (Errors(xErrors), yError: SingleError) => Errors(xErrors.head, xErrors.tail :+ yError)
-      case (xError: SingleError, Errors(yErrors)) => Errors(xError, yErrors.toList)
-      case (xError: SingleError, yError: SingleError) => Errors(xError, yError)
+      case (Errors(xErrors), yError: StdError) => Errors(xErrors.head, xErrors.tail :+ yError)
+      case (xError: StdError, Errors(yErrors)) => Errors(xError, yErrors.toList)
+      case (xError: StdError, yError: StdError) => Errors(xError, yError)
   end given
 
 end Error
