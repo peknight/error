@@ -9,4 +9,6 @@ package object std:
   type EmptyErrorShow[E <: Empty] = ErrorShow[E, Unit, Unit]
   type UndefinedError = StandardError[Undefined, Unit, Unit, EmptyTuple]
   type UndefinedErrorShow = ErrorShow[Undefined, Unit, Unit]
+  type JavaThrowableError[T <: Throwable] = StandardError[JavaThrowable[T], T, Unit, EmptyTuple]
+  type JavaThrowableErrorShow[T <: Throwable] = ErrorShow[JavaThrowable[T], T, Unit]
 end std
