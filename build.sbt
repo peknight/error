@@ -25,7 +25,6 @@ lazy val error = (project in file("."))
     errorParse.js,
     errorHttp4s,
   )
-  .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
   .settings(
     name := "error",
@@ -65,7 +64,6 @@ lazy val errorHttp4s = (project in file("error-http4s"))
     errorHttp4sClient.jvm,
     errorHttp4sClient.js,
   )
-  .enablePlugins(JavaAppPackaging)
   .settings(commonSettings)
   .settings(
     name := "error-http4s",
