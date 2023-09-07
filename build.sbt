@@ -82,4 +82,4 @@ lazy val errorHttp4sClient = (crossProject(JSPlatform, JVMPlatform) in file("err
 val catsVersion = "2.10.0"
 val catsParseVersion = "0.3.10"
 val spireVersion = "0.18.0"
-val http4sVersion = "1.0.0-M32"
+val http4sVersion = "1.0.0-M34"
