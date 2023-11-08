@@ -2,67 +2,73 @@ package com.peknight.error
 
 import cats.Monoid
 import cats.data.NonEmptyList
-import com.peknight.error.Error.StandardError
+import com.peknight.error.Error.{Common, Pure, pure}
 
-sealed trait Error extends Serializable derives CanEqual:
+import scala.annotation.tailrec
 
-  def to[E <: ErrorType, Actual, Expect, Ext <: Tuple](errorType: E, label: String, actual: Actual, expect: Expect,
-                                                       message: String, ext: Ext = EmptyTuple.asInstanceOf[Ext])
-  : StandardError[E, Actual, Expect, Ext] =
-    StandardError(errorType, label, actual, expect, message, ext, this)
+trait Error extends Exception with Serializable derives CanEqual:
+  def label(label: String): Error = pure(this) match
+    case Pure(e) => Common(e, label, "")
+    case c @ Common(_, _, _, _, _) => c.copy(label = label)
+    case _ => Common(this, label, "")
+
+  def message(message: String): Error = pure(this) match
+    case Pure(e) => Common(e, "", message)
+    case c @ Common(_, _, _, _, _) => c.copy(message = message)
+    case _ => Common(this, "", message)
+
+  def value[T](value: T): Error = pure(this) match
+    case Pure(e) => Common(e, "", "", Some(value))
+    case c @ Common(_, _, _, _, _) => c.copy(value = Some(value))
+    case _ => Common(this, "", "", Some(value))
+
+  def prepended[T](value: T): Error = pure(this) match
+    case Pure(e) => Common(e, "", "", Some(value))
+    case c @ Common(_, _, _, None, _) => c.copy(value = Some(value))
+    case c @ Common(_, _, _, Some(t: Tuple), _) => c.copy(value = Some(value *: t))
+    case c @ Common(_, _, _, Some(v), _) => c.copy(value = Some(value *: v *: EmptyTuple))
+    case _ => Common(this, "", "", Some(value))
+
+  def *:[T](value: T): Error = prepended(value)
+
+  def to(error: Error): Error = Common(error, "", "", None, Some(this))
+
 end Error
 
 object Error:
-  case object NoError extends Error
+  private[error] case object Success extends Error
 
-  case class StandardError[+E <: ErrorType, +Actual, +Expect, +Ext <: Tuple](errorType: E, label: String, actual: Actual,
-                                                                             expect: Expect, message: String,
-                                                                             ext: Ext = EmptyTuple.asInstanceOf[Ext],
-                                                                             cause: Error = NoError) extends Error:
-    def prepended[A](a: A): StandardError[E, Actual, Expect, A *: Ext] = copy(ext = a *: ext)
+  private[error] case class Pure[+E](error: E) extends Error
 
-    def *:[A](a: A): StandardError[E, Actual, Expect, A *: Ext] = prepended(a)
+  private[error] case class Common[+E, +T](error: E, label: String, message: String, value: Option[T] = None,
+                                          cause: Option[Error] = None) extends Error
 
-    override def toString: String =
-      List(
-        if label.isEmpty then "" else s"label=$label",
-        if actual.isInstanceOf[Unit] then "" else s"actual=$actual",
-        if expect.isInstanceOf[Unit] then "" else s"expect=$expect",
-        if message.isEmpty then "" else s"message=$message",
-        if ext.isInstanceOf[EmptyTuple] then "" else s"ext=$ext",
-        if cause == NoError then "" else s"cause=$cause"
-      ).filter(_.nonEmpty).mkString(s"$errorType(", ", ", ")")
-  end StandardError
-
-  case class Errors(errors: NonEmptyList[StdError]) extends Error:
-    override def toString: String = errors.toList.mkString("Errors(", ", ", ")")
-  end Errors
-
+  private[error] case class Errors(errors: NonEmptyList[Error]) extends Error
   object Errors:
-    def apply(head: StdError, tail: List[StdError]): Errors = Errors(NonEmptyList(head, tail))
-    def apply(head: StdError, tail: StdError*): Errors = Errors(NonEmptyList.of(head, tail*))
+    private[error] def apply(head: Error, tail: List[Error]): Errors = Errors(NonEmptyList(head, tail))
+    private[error] def apply(head: Error, tail: Error*): Errors = Errors(NonEmptyList.of(head, tail*))
   end Errors
 
-  def empty: Error = NoError
+  def success: Error = Success
 
-  def apply[E <: ErrorType, Actual, Expect, Ext <: Tuple](errorType: E, label: String, actual: Actual, expect: Expect,
-                                                          message: String, ext: Ext = EmptyTuple.asInstanceOf[Ext],
-                                                          cause: Error = NoError): Error =
-    StandardError(errorType, label, actual, expect, message, ext, cause)
+  @tailrec def pure[E](error: E): Error =
+    error match
+      case Pure(e) => pure(e)
+      case e: Error => e
+      case _ => Pure(error)
 
-  def apply(errors: NonEmptyList[StdError]): Error = Errors(errors)
-  def apply(head: StdError, tail: List[StdError]): Error = Errors(head, tail)
-  def apply(head: StdError, tail: StdError*): Error = Errors(head, tail*)
+  def apply(errors: NonEmptyList[Error]): Error = Errors(errors)
+  def apply(head: Error, tail: List[Error]): Error = Errors(head, tail)
+  def apply(head: Error, tail: Error*): Error = Errors(head, tail*)
 
   given Monoid[Error] with
-    def empty: Error = NoError
+    def empty: Error = Success
     def combine(x: Error, y: Error): Error = (x, y) match
-      case (NoError, yError) => yError
-      case (xError, NoError) => xError
+      case (Success, yError) => yError
+      case (xError, Success) => xError
       case (Errors(xErrors), Errors(yErrors)) => Errors(xErrors ++ yErrors.toList)
-      case (Errors(xErrors), yError: StdError) => Errors(xErrors.head, xErrors.tail :+ yError)
-      case (xError: StdError, Errors(yErrors)) => Errors(xError, yErrors.toList)
-      case (xError: StdError, yError: StdError) => Errors(xError, yError)
+      case (Errors(xErrors), yError) => Errors(xErrors.head, xErrors.tail :+ yError)
+      case (xError, Errors(yErrors)) => Errors(xError, yErrors.toList)
+      case (xError, yError) => Errors(xError, yError)
   end given
-
 end Error

@@ -21,9 +21,6 @@ lazy val error = (project in file("."))
     errorCore.js,
     errorSpire.jvm,
     errorSpire.js,
-    errorParse.jvm,
-    errorParse.js,
-    errorHttp4s,
   )
   .settings(commonSettings)
   .settings(
@@ -49,37 +46,5 @@ lazy val errorSpire = (crossProject(JSPlatform, JVMPlatform) in file("error-spir
     ),
   )
 
-lazy val errorParse = (crossProject(JSPlatform, JVMPlatform) in file("error-parse"))
-  .dependsOn(errorCore)
-  .settings(commonSettings)
-  .settings(
-    name := "error-parse",
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-parse" % catsParseVersion,
-    ),
-  )
-
-lazy val errorHttp4s = (project in file("error-http4s"))
-  .aggregate(
-    errorHttp4sClient.jvm,
-    errorHttp4sClient.js,
-  )
-  .settings(commonSettings)
-  .settings(
-    name := "error-http4s",
-  )
-
-lazy val errorHttp4sClient = (crossProject(JSPlatform, JVMPlatform) in file("error-http4s/http4s-client"))
-  .dependsOn(errorCore)
-  .settings(commonSettings)
-  .settings(
-    name := "error-http4s-client",
-    libraryDependencies ++= Seq(
-      "org.http4s" %%% "http4s-client" % http4sVersion,
-    ),
-  )
-
 val catsVersion = "2.10.0"
-val catsParseVersion = "0.3.10"
 val spireVersion = "0.18.0"
-val http4sVersion = "1.0.0-M34"

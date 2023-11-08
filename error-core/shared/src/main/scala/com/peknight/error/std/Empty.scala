@@ -1,11 +1,6 @@
 package com.peknight.error.std
 
-import com.peknight.error.ErrorType
+import com.peknight.error.Error
 
-trait Empty extends ErrorType
-case object Empty extends Empty:
-
-  given [E <: Empty]: EmptyErrorShow[E] with
-    def show(errorType: E, label: String, actual: Unit, expect: Unit): String = s"$label is empty"
-  end given
-end Empty
+trait Empty extends Error
+object Empty extends Empty with EmptyPlatform

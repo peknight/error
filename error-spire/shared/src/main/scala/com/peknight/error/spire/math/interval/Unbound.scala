@@ -1,10 +1,6 @@
 package com.peknight.error.spire.math.interval
 
-import com.peknight.error.ErrorType
+import com.peknight.error.Error
 
-trait Unbound extends ErrorType
-case object Unbound extends Unbound:
-  given UnboundErrorShow with
-    def show(errorType: Unbound, label: String, actual: Unit, expect: Unit): String = s"$label is unbound"
-  end given
-end Unbound
+trait Unbound extends Error
+object Unbound extends Unbound with UnboundPlatform

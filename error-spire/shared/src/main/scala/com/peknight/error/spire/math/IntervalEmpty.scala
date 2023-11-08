@@ -1,6 +1,6 @@
 package com.peknight.error.spire.math
 
-import com.peknight.error.std.Empty
+import com.peknight.error.std.{Empty, EmptyPlatform}
 
 trait IntervalEmpty extends Empty
-case object IntervalEmpty extends IntervalEmpty
+object IntervalEmpty extends IntervalEmpty with EmptyPlatform
