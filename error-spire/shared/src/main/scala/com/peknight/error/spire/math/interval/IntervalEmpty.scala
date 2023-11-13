@@ -1,4 +1,4 @@
-package com.peknight.error.spire.math
+package com.peknight.error.spire.math.interval
 
 import com.peknight.error.std.Empty
 

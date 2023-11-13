@@ -1,4 +1,4 @@
-package com.peknight.error.spire.math
+package com.peknight.error.spire.math.interval
 
 import cats.Show
 import cats.syntax.show.*
@@ -11,8 +11,9 @@ trait IntervalNotContains[N] extends Error:
   def interval: Interval[N]
 end IntervalNotContains
 object IntervalNotContains:
-  private[this] case class IntervalNotContainsError[N](value: N, interval: Interval[N])(using Show[N]) extends IntervalNotContains[N]:
-    override def labelMessage(label: String): Option[String] =
+  private[this] case class IntervalNotContainsError[N](value: N, interval: Interval[N])(using Show[N])
+    extends IntervalNotContains[N]:
+    override def lowPriorityLabelMessage(label: String): Option[String] =
       val msg = interval match
         case All() => s"$label(${value.show}) is not in an all interval"
         case above@Above(_, _) => above.lowerBound match

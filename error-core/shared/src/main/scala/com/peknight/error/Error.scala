@@ -1,45 +1,71 @@
 package com.peknight.error
 
-import cats.Monoid
 import cats.data.NonEmptyList
 import cats.syntax.option.*
-import com.peknight.error.Error.{Common, Pure, pure, pureErrorType}
+import com.peknight.error.Error.{Common, Pure, pureMessage}
+import com.peknight.error.instances.ErrorInstances
 
 import scala.annotation.tailrec
 
 trait Error extends Serializable derives CanEqual:
-  protected def labelOption: Option[String] = None
-  protected def messageOption: Option[String] = None
-  protected def labelMessage(label: String): Option[String] = None
-  def message: String =
-    messageOption.filter(_.nonEmpty) match
-      case Some(m) => m
-      case _ => labelOption.filter(_.nonEmpty).fold(pureErrorType(this))(label =>
-        labelMessage(label).filter(_.nonEmpty).getOrElse(s"$label: ${pureErrorType(this)}")
-      )
-  end message
+  def message: String = labelMessage(None)
   def messages: List[String] = List(message)
   def cause: Option[Error] = None
+  protected def pure: Error = Error.pure(this)
+  protected def labelOption: Option[String] = None
+  protected def messageOption: Option[String] = None
+  protected def lowPriorityLabelMessage(label: String): Option[String] = None
+  protected def lowPriorityMessage: Option[String] = None
+  protected def labelMessage(outerLabelOption: Option[String]): String =
+    (outerLabelOption.filter(_.nonEmpty), messageOption.filter(_.nonEmpty)) match
+      case (Some(outerLabel), Some(m)) => s"$outerLabel: $m"
+      case (_, Some(m)) => m
+      case _ =>
+        val labelOpt: Option[String] = outerLabelOption.filter(_.nonEmpty)
+          .fold(labelOption.filter(_.nonEmpty))(outerLabel =>
+            labelOption.filter(_.nonEmpty).fold(outerLabel.some)(currentLabel => s"$outerLabel.$currentLabel".some)
+          )
+        pure match
+          case Common(e: Error, _, _, _, _) => e.labelMessage(labelOpt)
+          case _ => labelOpt.fold(lowPriorityMessage.filter(_.nonEmpty).getOrElse(pureMessage(this)))(label =>
+            lowPriorityLabelMessage(label).filter(_.nonEmpty)
+              .orElse(lowPriorityMessage.filter(_.nonEmpty).map(lpm => s"$label: $lpm"))
+              .getOrElse(s"$label: ${pureMessage(this)}")
+          )
+  end labelMessage
+
   def label(label: String): Error =
     val labelOpt = label.some.filter(_.nonEmpty)
-    pure(this) match
-      case Pure(e) => Common(e, labelOpt, cause = cause)
-      case c @ Common(_, _, _, _, _) => c.copy(labelOption = labelOpt)
-      case _ => Common(this, labelOpt, cause = cause)
+    if labelOpt == labelOption then this
+    else
+      pure match
+        case Pure(e) => Common(e, labelOpt, cause = cause)
+        case c @ Common(_, _, _, _, _) => c.copy(labelOption = labelOpt)
+        case _ => Common(this, labelOpt, cause = cause)
+  end label
+
+  def prependLabel(prependLabel: String): Error =
+    prependLabel.some.filter(_.nonEmpty) match
+      case None => this
+      case Some(prepend) => label(labelOption.fold(prepend)(lab => s"$prepend.$lab"))
+  end prependLabel
 
   def message(message: String): Error =
     val messageOpt = message.some.filter(_.nonEmpty)
-    pure(this) match
-      case Pure(e) => Common(e, messageOption = messageOpt, cause = cause)
-      case c @ Common(_, _, _, _, _) => c.copy(messageOption = messageOpt)
-      case _ => Common(this, messageOption = messageOpt, cause = cause)
+    if messageOpt == messageOption then this
+    else
+      pure match
+        case Pure(e) => Common(e, messageOption = messageOpt, cause = cause)
+        case c @ Common(_, _, _, _, _) => c.copy(messageOption = messageOpt)
+        case _ => Common(this, messageOption = messageOpt, cause = cause)
+  end message
 
-  def value[T](value: T): Error = pure(this) match
+  def value[T](value: T): Error = pure match
     case Pure(e) => Common(e, value = value.some, cause = cause)
     case c @ Common(_, _, _, _, _) => c.copy(value = value.some)
     case _ => Common(this, value = value.some, cause = cause)
 
-  def prepended[T](value: T): Error = pure(this) match
+  def prepended[T](value: T): Error = pure match
     case Pure(e) => Common(e, value = value.some, cause = cause)
     case c @ Common(_, _, _, None, _) => c.copy(value = value.some)
     case c @ Common(_, _, _, Some(t: Tuple), _) => c.copy(value = (value *: t).some)
@@ -52,64 +78,58 @@ trait Error extends Serializable derives CanEqual:
 
 end Error
 
-object Error:
-  private[error] def errorType[E](e: E): String =
-    e.getClass.getSimpleName.replaceAll("\\$", "")
-
-  private[error] def pureErrorType[E](e: E): String =
-    pure(e) match
-      case Pure(error) => errorType(error)
-      case Common(error, _, _, _, _) => errorType(error)
-      case _ => errorType(e)
-
+object Error extends ErrorInstances:
   private[error] case object Success extends Error
-
   private[error] case class Pure[+E](error: E) extends Error
-
-  trait Label extends Error:
-    def label: String
-    override def labelOption: Option[String] = label.some
-  end Label
-
-  trait Value[+A] extends Error:
-    def value: A
-  end Value
-
-  trait LabelValue[+A] extends Label with Value[A]
-
-  private[error] case class Common[+E, +T](error: E, override val labelOption: Option[String] = None,
-                                           override val messageOption: Option[String] = None, value: Option[T] = None,
-                                           override val cause: Option[Error] = None) extends Value[Option[T]]
-
   private[error] case class Errors(errors: NonEmptyList[Error]) extends Error:
-    override def message: String = messages.mkString(", ")
+    override def lowPriorityMessage: Option[String] = messages.mkString(", ").some
     override def messages: List[String] = errors.toList.flatMap(_.messages)
   end Errors
   object Errors:
     private[error] def apply(head: Error, tail: List[Error]): Errors = Errors(NonEmptyList(head, tail))
-    private[error] def apply(head: Error, tail: Error*): Errors = Errors(NonEmptyList.of(head, tail*))
+    private[error] def apply(head: Error, tail: Error*): Errors = Errors(NonEmptyList.of(head, tail *))
   end Errors
+  trait Label extends Error:
+    def label: String
+    override def labelOption: Option[String] = label.some
+  end Label
+  trait Value[+A] extends Error:
+    def value: A
+  end Value
+  trait LabelValue[+A] extends Label with Value[A]
+  private[error] case class Common[+E, +T](
+    error: E,
+    override val labelOption: Option[String] = None,
+    override val messageOption: Option[String] = None,
+    value: Option[T] = None,
+    override val cause: Option[Error] = None
+  ) extends Value[Option[T]]
 
   def success: Error = Success
 
   @tailrec def pure[E](error: E): Error =
     error match
       case Pure(e) => pure(e)
+      case Errors(NonEmptyList(e, Nil)) => pure(e)
       case e: Error => e
       case _ => Pure(error)
 
-  def apply(errors: NonEmptyList[Error]): Error = Errors(errors)
-  def apply(head: Error, tail: List[Error]): Error = Errors(head, tail)
-  def apply(head: Error, tail: Error*): Error = Errors(head, tail*)
+  def apply: Error = success
+  def apply[E](error: E): Error =
+    error match
+      case NonEmptyList(head, tail) => apply(head, tail)
+      case _ => pure(error)
+  def apply[E](head: E, tail: E*): Error = apply(head, tail.toList)
+  def apply[E](head: E, tail: List[E]): Error = if tail.isEmpty then pure(head) else Errors(pure(head), tail.map(pure))
 
-  given Monoid[Error] with
-    def empty: Error = Success
-    def combine(x: Error, y: Error): Error = (pure(x), pure(y)) match
-      case (Success, yError) => yError
-      case (xError, Success) => xError
-      case (Errors(xErrors), Errors(yErrors)) => Errors(xErrors ++ yErrors.toList)
-      case (Errors(xErrors), yError) => Errors(xErrors.head, xErrors.tail :+ yError)
-      case (xError, Errors(yErrors)) => Errors(xError, yErrors.toList)
-      case (xError, yError) => Errors(xError, yError)
-  end given
+  private[error] def errorType[E](e: E): String =
+    e.getClass.getSimpleName.replaceAll("\\$", "")
+
+  @tailrec private[error] def pureMessage[E](e: E): String =
+    pure(e) match
+      case Pure(m: String) => m
+      case Pure(error) => errorType(error)
+      case Common(m: String, _, _, _, _) => m
+      case Common(error, _, _, _, _) => pureMessage(error)
+      case _ => errorType(e)
 end Error
