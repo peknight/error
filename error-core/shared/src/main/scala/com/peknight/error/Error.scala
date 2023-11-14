@@ -90,7 +90,7 @@ object Error extends ErrorInstances:
   end Lift
   private[error] case class Pure[+E](error: E) extends Lift[E]
   private[error] case class Errors(errors: NonEmptyList[Error]) extends Error:
-    override def lowPriorityMessage: Option[String] = messages.mkString(", ").some
+    override protected def lowPriorityMessage: Option[String] = messages.mkString(", ").some
     override def messages: List[String] = errors.toList.flatMap(_.messages)
   end Errors
   object Errors:

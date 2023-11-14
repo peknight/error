@@ -13,7 +13,7 @@ end IntervalNotContains
 object IntervalNotContains:
   private[this] case class IntervalNotContains[N](value: N, interval: Interval[N])(using Show[N])
     extends com.peknight.error.spire.math.interval.IntervalNotContains[N]:
-    override def lowPriorityLabelMessage(label: String): Option[String] =
+    override protected def lowPriorityLabelMessage(label: String): Option[String] =
       val msg = interval match
         case All() => s"$label(${value.show}) is not in an all interval"
         case above@Above(_, _) => above.lowerBound match
