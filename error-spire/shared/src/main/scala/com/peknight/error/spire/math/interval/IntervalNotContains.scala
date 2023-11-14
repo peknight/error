@@ -11,8 +11,8 @@ trait IntervalNotContains[N] extends Error:
   def interval: Interval[N]
 end IntervalNotContains
 object IntervalNotContains:
-  private[this] case class IntervalNotContainsError[N](value: N, interval: Interval[N])(using Show[N])
-    extends IntervalNotContains[N]:
+  private[this] case class IntervalNotContains[N](value: N, interval: Interval[N])(using Show[N])
+    extends com.peknight.error.spire.math.interval.IntervalNotContains[N]:
     override def lowPriorityLabelMessage(label: String): Option[String] =
       val msg = interval match
         case All() => s"$label(${value.show}) is not in an all interval"
@@ -35,6 +35,7 @@ object IntervalNotContains:
         case Point(v) => s"$label should be ${v.show}, but was ${value.show}"
         case Empty() => s"$label(${value.show}) will never be in an empty interval"
       Some(msg)
-  end IntervalNotContainsError
-  def apply[N: Show](value: N, interval: Interval[N]): IntervalNotContains[N] = IntervalNotContainsError[N](value, interval)
+  end IntervalNotContains
+  def apply[N: Show](value: N, interval: Interval[N]): com.peknight.error.spire.math.interval.IntervalNotContains[N] =
+    IntervalNotContains[N](value, interval)
 end IntervalNotContains

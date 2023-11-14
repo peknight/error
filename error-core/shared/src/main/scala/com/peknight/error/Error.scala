@@ -7,7 +7,7 @@ import com.peknight.error.instances.ErrorInstances
 
 import scala.annotation.tailrec
 
-trait Error extends Serializable derives CanEqual:
+trait Error extends Exception with Serializable derives CanEqual:
   def message: String = labelMessage(None)
   def messages: List[String] = List(message)
   def cause: Option[Error] = None
@@ -76,11 +76,19 @@ trait Error extends Serializable derives CanEqual:
 
   def to(error: Error): Error = Common(error, cause = Some(this))
 
+  override final def fillInStackTrace(): Throwable = this
+
+  override final def getMessage: String = message
+
+  override def getCause: Throwable = cause.filter(_.ne(this)).orNull
 end Error
 
 object Error extends ErrorInstances:
   private[error] case object Success extends Error
-  private[error] case class Pure[+E](error: E) extends Error
+  trait Lift[+E] extends Error:
+    def error: E
+  end Lift
+  private[error] case class Pure[+E](error: E) extends Lift[E]
   private[error] case class Errors(errors: NonEmptyList[Error]) extends Error:
     override def lowPriorityMessage: Option[String] = messages.mkString(", ").some
     override def messages: List[String] = errors.toList.flatMap(_.messages)
@@ -103,7 +111,7 @@ object Error extends ErrorInstances:
     override val messageOption: Option[String] = None,
     value: Option[T] = None,
     override val cause: Option[Error] = None
-  ) extends Value[Option[T]]
+  ) extends Lift[E] with Value[Option[T]]
 
   def success: Error = Success
 
@@ -128,8 +136,11 @@ object Error extends ErrorInstances:
   @tailrec private[error] def pureMessage[E](e: E): String =
     pure(e) match
       case Pure(m: String) => m
+      case Pure(t: Throwable) => t.getMessage
       case Pure(error) => errorType(error)
-      case Common(m: String, _, _, _, _) => m
-      case Common(error, _, _, _, _) => pureMessage(error)
+      case err: Lift[?] => err.error match
+        case m: String => m
+        case t: Throwable => t.getMessage
+        case error => pureMessage(error)
       case _ => errorType(e)
 end Error
