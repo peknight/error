@@ -130,8 +130,10 @@ object Error extends ErrorInstances:
   def apply[E](head: E, tail: E*): Error = apply(head, tail.toList)
   def apply[E](head: E, tail: List[E]): Error = if tail.isEmpty then pure(head) else Errors(pure(head), tail.map(pure))
 
-  private[error] def errorType[E](e: E): String =
-    e.getClass.getSimpleName.replaceAll("\\$", "")
+  private[error] def errorType[E](e: E): String = errorClass(e.getClass)
+
+  private[error] def errorClass[E](clazz: Class[E]): String =
+    clazz.getSimpleName.replaceAll("\\$", "")
 
   @tailrec private[error] def pureMessage[E](e: E): String =
     pure(e) match
