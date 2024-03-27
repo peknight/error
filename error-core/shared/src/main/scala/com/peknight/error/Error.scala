@@ -26,13 +26,15 @@ trait Error extends Exception with Serializable derives CanEqual:
             labelOption.filter(_.nonEmpty).fold(outerLabel.some)(currentLabel => s"$outerLabel.$currentLabel".some)
           )
         pure match
-          case Common(e: Error, _, _, _, _) => e.labelMessage(labelOpt)
+          case e: Lift[?] if e.error.isInstanceOf[Error] => e.error.asInstanceOf[Error].labelMessage(labelOpt)
           case _ => labelOpt.fold(lowPriorityMessage.filter(_.nonEmpty).getOrElse(pureMessage(this)))(label =>
             lowPriorityLabelMessage(label).filter(_.nonEmpty)
               .orElse(lowPriorityMessage.filter(_.nonEmpty).map(lpm => s"$label: $lpm"))
               .getOrElse(s"$label: ${pureMessage(this)}")
           )
   end labelMessage
+  
+  
 
   def label(label: String): Error =
     val labelOpt = label.some.filter(_.nonEmpty)
@@ -83,42 +85,23 @@ trait Error extends Exception with Serializable derives CanEqual:
   override def getCause: Throwable = cause.filter(_.ne(this)).orNull
 end Error
 
-object Error extends ErrorInstances:
-  private[error] case object Success extends Error
-  trait Lift[+E] extends Error:
-    def error: E
-  end Lift
-  private[error] case class Pure[+E](error: E) extends Lift[E]
-  private[error] case class Errors(errors: NonEmptyList[Error]) extends Error:
-    override protected def lowPriorityMessage: Option[String] = messages.mkString(", ").some
-    override def messages: List[String] = errors.toList.flatMap(_.messages)
-  end Errors
-  object Errors:
-    private[error] def apply(head: Error, tail: List[Error]): Errors = Errors(NonEmptyList(head, tail))
-    private[error] def apply(head: Error, tail: Error*): Errors = Errors(NonEmptyList.of(head, tail *))
-  end Errors
-  trait Label extends Error:
-    def label: String
-    override def labelOption: Option[String] = label.some
-  end Label
-  trait Value[+A] extends Error:
-    def value: A
-  end Value
-  trait LabelValue[+A] extends Label with Value[A]
+object Error extends Error with ErrorInstances:
+  private[error] case class Pure[+E](error: E) extends com.peknight.error.Pure[E]
+  private[error] case class Errors(errors: NonEmptyList[Error]) extends com.peknight.error.Errors[Error]
   private[error] case class Common[+E, +T](
     error: E,
     override val labelOption: Option[String] = None,
     override val messageOption: Option[String] = None,
     value: Option[T] = None,
     override val cause: Option[Error] = None
-  ) extends Lift[E] with Value[Option[T]]
+  ) extends com.peknight.error.Common[E, T]
 
   def success: Error = Success
 
   @tailrec def pure[E](error: E): Error =
     error match
-      case Pure(e) => pure(e)
-      case Errors(NonEmptyList(e, Nil)) => pure(e)
+      case e: com.peknight.error.Pure[?] => pure(e.error)
+      case e: com.peknight.error.Errors[?] if e.errors.tail.isEmpty => pure(e.errors.head)
       case e: Error => e
       case _ => Pure(error)
 
@@ -128,7 +111,9 @@ object Error extends ErrorInstances:
       case NonEmptyList(head, tail) => apply(head, tail)
       case _ => pure(error)
   def apply[E](head: E, tail: E*): Error = apply(head, tail.toList)
-  def apply[E](head: E, tail: List[E]): Error = if tail.isEmpty then pure(head) else Errors(pure(head), tail.map(pure))
+  def apply[E](head: E, tail: List[E]): Error =
+    if tail.isEmpty then pure(head)
+    else Errors(NonEmptyList(pure(head), tail.map(pure)))
 
   private[error] def errorType[E](e: E): String = errorClass(e.getClass)
 
@@ -137,9 +122,6 @@ object Error extends ErrorInstances:
 
   @tailrec private[error] def pureMessage[E](e: E): String =
     pure(e) match
-      case Pure(m: String) => m
-      case Pure(t: Throwable) => t.getMessage
-      case Pure(error) => errorType(error)
       case err: Lift[?] => err.error match
         case m: String => m
         case t: Throwable => t.getMessage

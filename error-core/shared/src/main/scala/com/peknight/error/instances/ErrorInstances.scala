@@ -1,8 +1,9 @@
 package com.peknight.error.instances
 
 import cats.Monoid
-import com.peknight.error.Error
-import com.peknight.error.Error.{Errors, Success, pure}
+import cats.data.NonEmptyList
+import com.peknight.error.Error.{Errors, pure}
+import com.peknight.error.{Error, Success}
 
 trait ErrorInstances:
   given Monoid[Error] with
@@ -11,8 +12,8 @@ trait ErrorInstances:
       case (Success, yError) => yError
       case (xError, Success) => xError
       case (Errors(xErrors), Errors(yErrors)) => Errors(xErrors ++ yErrors.toList)
-      case (Errors(xErrors), yError) => Errors(xErrors.head, xErrors.tail :+ yError)
-      case (xError, Errors(yErrors)) => Errors(xError, yErrors.toList)
-      case (xError, yError) => Errors(xError, yError)
+      case (Errors(xErrors), yError) => Errors(NonEmptyList(xErrors.head, xErrors.tail :+ yError))
+      case (xError, Errors(yErrors)) => Errors(NonEmptyList(xError, yErrors.toList))
+      case (xError, yError) => Errors(NonEmptyList(xError, List(yError)))
   end given
 end ErrorInstances
