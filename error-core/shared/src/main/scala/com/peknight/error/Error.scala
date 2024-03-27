@@ -120,7 +120,7 @@ object Error extends Error with ErrorInstances:
   private[error] def errorClass[E](clazz: Class[E]): String =
     clazz.getSimpleName.replaceAll("\\$", "")
 
-  @tailrec private[error] def pureMessage[E](e: E): String =
+  @tailrec def pureMessage[E](e: E): String =
     pure(e) match
       case err: Lift[?] => err.error match
         case m: String => m
