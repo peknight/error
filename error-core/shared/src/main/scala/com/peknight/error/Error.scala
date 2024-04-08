@@ -76,7 +76,7 @@ trait Error extends Exception with Serializable derives CanEqual:
 
   def *:[T](value: T): Error = prepended(value)
 
-  def to(error: Error): Error = Common(error, cause = Some(this))
+  def to[E](error: E): Error = Common(error, cause = Some(this))
 
   override final def fillInStackTrace(): Throwable = this
 
