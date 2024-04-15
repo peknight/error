@@ -115,9 +115,9 @@ object Error extends Error with ErrorInstances:
     if tail.isEmpty then pure(head)
     else Errors(NonEmptyList(pure(head), tail.map(pure)))
 
-  private[error] def errorType[E](e: E): String = errorClass(e.getClass)
+  def errorType[E](e: E): String = errorClass(e.getClass)
 
-  private[error] def errorClass[E](clazz: Class[E]): String =
+  def errorClass[E](clazz: Class[E]): String =
     clazz.getSimpleName.replaceAll("\\$", "")
 
   @tailrec def pureMessage[E](e: E): String =
