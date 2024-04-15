@@ -6,6 +6,7 @@ import com.peknight.error.Error.{Common, Pure, pureMessage}
 import com.peknight.error.instances.ErrorInstances
 
 import scala.annotation.tailrec
+import scala.reflect.ClassTag
 
 trait Error extends Exception with Serializable derives CanEqual:
   def message: String = labelMessage(None)
@@ -115,10 +116,11 @@ object Error extends Error with ErrorInstances:
     if tail.isEmpty then pure(head)
     else Errors(NonEmptyList(pure(head), tail.map(pure)))
 
+  def errorClassTag[E](using classTag: ClassTag[E]): String = errorClass(classTag.runtimeClass)
   def errorType[E](e: E): String = errorClass(e.getClass)
-
   def errorClass[E](clazz: Class[E]): String =
     clazz.getSimpleName.replaceAll("\\$", "")
+
 
   @tailrec def pureMessage[E](e: E): String =
     pure(e) match

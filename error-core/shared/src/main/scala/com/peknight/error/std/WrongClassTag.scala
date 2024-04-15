@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 
 trait WrongClassTag[A] extends WrongType:
   def expectedClassTag: ClassTag[A]
-  def expectedType: String = Error.errorClass(expectedClassTag.runtimeClass)
+  def expectedType: String = Error.errorClassTag(using expectedClassTag)
 end WrongClassTag
 object WrongClassTag:
   private[this] case class WrongClassTag[A](expectedClassTag: ClassTag[A])
