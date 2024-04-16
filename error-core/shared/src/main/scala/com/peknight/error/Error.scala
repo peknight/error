@@ -110,6 +110,8 @@ object Error extends Error with ErrorInstances:
   def apply[E](error: E): Error =
     error match
       case NonEmptyList(head, tail) => apply(head, tail)
+      case head :: Nil => pure(head)
+      case head :: tail => apply(head, tail)
       case _ => pure(error)
   def apply[E](head: E, tail: E*): Error = apply(head, tail.toList)
   def apply[E](head: E, tail: List[E]): Error =
