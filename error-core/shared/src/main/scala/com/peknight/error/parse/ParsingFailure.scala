@@ -64,8 +64,6 @@ object ParsingFailure extends ParsingFailure:
     override val cause: Option[Error] = None
   ) extends ParsingFailure with com.peknight.error.Common[E, T]
 
-  def success: ParsingFailure = Success
-
   @tailrec def pure[E](error: E): ParsingFailure =
     error match
       case e: (com.peknight.error.Pure[?] & ParsingFailure) => pure(e.error)
@@ -73,12 +71,12 @@ object ParsingFailure extends ParsingFailure:
       case e: ParsingFailure => e
       case _ => Pure(error)
 
-  def apply: ParsingFailure = success
+  def apply: ParsingFailure = Success
   def apply[E](error: E): ParsingFailure =
     given [A]: CanEqual[List[A], E] = CanEqual.derived
     error match
       case NonEmptyList(head, tail) => apply(head, tail)
-      case Nil => success
+      case Nil => Success
       case head :: Nil => pure(head)
       case head :: tail => apply(head, tail)
       case _ => pure(error)

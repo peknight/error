@@ -12,7 +12,7 @@ trait Error extends Exception with Serializable derives CanEqual:
   def message: String = labelMessage(None)
   def messages: List[String] = List(message)
   def cause: Option[Error] = None
-  def isSuccess: Boolean = false
+  def success: Boolean = false
   protected def pure: Error = Error.pure(this)
   protected def labelOption: Option[String] = None
   protected def messageOption: Option[String] = None
@@ -98,8 +98,6 @@ object Error extends Error with ErrorInstances:
     override val cause: Option[Error] = None
   ) extends com.peknight.error.Common[E, T]
 
-  def success: Error = Success
-
   @tailrec def pure[E](error: E): Error =
     error match
       case e: com.peknight.error.Pure[?] => pure(e.error)
@@ -107,12 +105,12 @@ object Error extends Error with ErrorInstances:
       case e: Error => e
       case _ => Pure(error)
 
-  def apply: Error = success
+  def apply: Error = Success
   def apply[E](error: E): Error =
     given [A]: CanEqual[List[A], E] = CanEqual.derived
     error match
       case NonEmptyList(head, tail) => apply(head, tail)
-      case Nil => success
+      case Nil => Success
       case head :: Nil => pure(head)
       case head :: tail => apply(head, tail)
       case _ => pure(error)
