@@ -108,8 +108,10 @@ object Error extends Error with ErrorInstances:
 
   def apply: Error = success
   def apply[E](error: E): Error =
+    given [A]: CanEqual[List[A], E] = CanEqual.derived
     error match
       case NonEmptyList(head, tail) => apply(head, tail)
+      case Nil => success
       case head :: Nil => pure(head)
       case head :: tail => apply(head, tail)
       case _ => pure(error)
