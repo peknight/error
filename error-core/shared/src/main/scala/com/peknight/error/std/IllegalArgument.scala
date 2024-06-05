@@ -8,6 +8,6 @@ trait IllegalArgument[A] extends Error:
   override protected def lowPriorityMessage: Option[String] = Some(s"Illegal argument: $argument")
 end IllegalArgument
 object IllegalArgument:
-  private[this] case class IllegalArgument[A](argument: A) extends com.peknight.error.std.IllegalArgument[A]
+  private case class IllegalArgument[A](argument: A) extends com.peknight.error.std.IllegalArgument[A]
   def apply[A](argument: A): com.peknight.error.std.IllegalArgument[A] = IllegalArgument(argument)
 end IllegalArgument

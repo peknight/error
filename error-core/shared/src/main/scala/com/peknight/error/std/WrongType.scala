@@ -9,7 +9,7 @@ trait WrongType extends Error:
   override protected def lowPriorityMessage: Option[String] = Some(s"Wrong type, expecting $expectedType")
 end WrongType
 object WrongType:
-  private[this] case class WrongType(expectedType: String) extends com.peknight.error.std.WrongType
+  private case class WrongType(expectedType: String) extends com.peknight.error.std.WrongType
   def apply(expectedType: String): com.peknight.error.std.WrongType = WrongType(expectedType)
 end WrongType
 

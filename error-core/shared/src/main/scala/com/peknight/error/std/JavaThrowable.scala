@@ -6,6 +6,6 @@ trait JavaThrowable[T <: Throwable] extends Error:
   override def lowPriorityMessage: Option[String] = Option(throwable.getMessage).filter(_.nonEmpty)
 end JavaThrowable
 object JavaThrowable:
-  private[this] case class JavaThrowable[T <: Throwable](throwable: T) extends com.peknight.error.std.JavaThrowable[T]
+  private case class JavaThrowable[T <: Throwable](throwable: T) extends com.peknight.error.std.JavaThrowable[T]
   def apply[T <: Throwable](throwable: T): com.peknight.error.std.JavaThrowable[T] = JavaThrowable(throwable)
 end JavaThrowable

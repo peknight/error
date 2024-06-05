@@ -11,7 +11,7 @@ trait IntervalNotContains[N] extends Error:
   def interval: Interval[N]
 end IntervalNotContains
 object IntervalNotContains:
-  private[this] case class IntervalNotContains[N](value: N, interval: Interval[N])(using Show[N])
+  private case class IntervalNotContains[N](value: N, interval: Interval[N])(using Show[N])
     extends com.peknight.error.spire.math.interval.IntervalNotContains[N]:
     override protected def lowPriorityLabelMessage(label: String): Option[String] =
       val msg = interval match

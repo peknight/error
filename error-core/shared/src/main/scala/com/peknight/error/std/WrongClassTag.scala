@@ -9,7 +9,7 @@ trait WrongClassTag[A] extends WrongType:
   def expectedType: String = Error.errorClassTag(using expectedClassTag)
 end WrongClassTag
 object WrongClassTag:
-  private[this] case class WrongClassTag[A](expectedClassTag: ClassTag[A])
+  private case class WrongClassTag[A](expectedClassTag: ClassTag[A])
     extends com.peknight.error.std.WrongClassTag[A]
   def apply[A](using classTag: ClassTag[A]): com.peknight.error.std.WrongClassTag[A] = WrongClassTag[A](classTag)
 end WrongClassTag

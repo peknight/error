@@ -4,6 +4,7 @@ import cats.data.NonEmptyList
 import cats.syntax.option.*
 import com.peknight.error.Error.{Common, Pure, pureMessage}
 import com.peknight.error.instances.ErrorInstances
+import com.peknight.error.std.JavaThrowable
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -103,6 +104,7 @@ object Error extends Error with ErrorInstances:
       case e: com.peknight.error.Pure[?] => pure(e.error)
       case e: com.peknight.error.Errors[?] if e.errors.tail.isEmpty => pure(e.errors.head)
       case e: Error => e
+      case e: Throwable => JavaThrowable(e)
       case _ => Pure(error)
 
   def apply: Error = Success
