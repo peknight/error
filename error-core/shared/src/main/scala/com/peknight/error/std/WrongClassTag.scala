@@ -4,12 +4,13 @@ import com.peknight.error.Error
 
 import scala.reflect.ClassTag
 
-trait WrongClassTag[A] extends WrongType:
-  def expectedClassTag: ClassTag[A]
+trait WrongClassTag[E] extends WrongType:
+  def expectedClassTag: ClassTag[E]
   def expectedType: String = Error.errorClassTag(using expectedClassTag)
 end WrongClassTag
 object WrongClassTag:
-  private case class WrongClassTag[A](expectedClassTag: ClassTag[A])
-    extends com.peknight.error.std.WrongClassTag[A]
-  def apply[A](using classTag: ClassTag[A]): com.peknight.error.std.WrongClassTag[A] = WrongClassTag[A](classTag)
+  private case class WrongClassTag[E](expectedClassTag: ClassTag[E], override val actualType: Option[String])
+    extends com.peknight.error.std.WrongClassTag[E]
+  def apply[E](using classTag: ClassTag[E]): com.peknight.error.std.WrongClassTag[E] = WrongClassTag[E](classTag, None)
+  def apply[E, A](a: A)(using classTag: ClassTag[E]): com.peknight.error.std.WrongClassTag[E] = WrongClassTag[E](classTag, Some(Error.errorType(a)))
 end WrongClassTag
