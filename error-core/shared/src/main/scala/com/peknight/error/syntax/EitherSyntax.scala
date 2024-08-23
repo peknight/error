@@ -13,8 +13,5 @@ trait EitherSyntax:
     def *:[T](value: => T): Either[Error, B] = either.left.map(e => Error(e).prepended(value))
     def to(error: => Error): Either[Error, B] = either.left.map(e => Error(e).to(error))
   end extension
-  extension [A] (flag: Boolean)
-    def toEither[E](e: E): Either[E, Unit] = if flag then Right(()) else Left(e)
-  end extension
 end EitherSyntax
 object EitherSyntax extends EitherSyntax
