@@ -10,6 +10,6 @@ object WrongClass:
   private case class WrongClass[E](expectedClass: Class[E], override val actualType: Option[String])
     extends com.peknight.error.std.WrongClass[E]
   def apply[E](expectedClass: Class[E]): com.peknight.error.std.WrongClass[E] = WrongClass[E](expectedClass, None)
-  def apply[E, A](expectedClass: Class[E], actual: A): com.peknight.error.std.WrongClass[E] =
+  def apply[E](expectedClass: Class[E], actual: Any): com.peknight.error.std.WrongClass[E] =
     WrongClass[E](expectedClass, Some(Error.errorType(actual)))
 end WrongClass

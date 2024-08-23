@@ -12,5 +12,5 @@ object WrongClassTag:
   private case class WrongClassTag[E](expectedClassTag: ClassTag[E], override val actualType: Option[String])
     extends com.peknight.error.std.WrongClassTag[E]
   def apply[E](using classTag: ClassTag[E]): com.peknight.error.std.WrongClassTag[E] = WrongClassTag[E](classTag, None)
-  def apply[E, A](a: A)(using classTag: ClassTag[E]): com.peknight.error.std.WrongClassTag[E] = WrongClassTag[E](classTag, Some(Error.errorType(a)))
+  def apply[E](a: Any)(using classTag: ClassTag[E]): com.peknight.error.std.WrongClassTag[E] = WrongClassTag[E](classTag, Some(Error.errorType(a)))
 end WrongClassTag
