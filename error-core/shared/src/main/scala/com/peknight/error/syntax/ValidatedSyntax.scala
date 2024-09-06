@@ -1,7 +1,6 @@
 package com.peknight.error.syntax
 
 import cats.data.Validated
-import cats.data.Validated.{Invalid, Valid}
 import com.peknight.error.Error
 
 trait ValidatedSyntax:
