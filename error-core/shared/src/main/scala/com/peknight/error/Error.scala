@@ -28,7 +28,7 @@ trait Error extends Exception with Serializable derives CanEqual:
           .fold(labelOption.filter(_.nonEmpty))(outerLabel =>
             labelOption.filter(_.nonEmpty).fold(outerLabel.some)(currentLabel => s"$outerLabel.$currentLabel".some)
           )
-        pure match
+        Error.pure(this) match
           case e: Lift[?] if e.error.isInstanceOf[Error] => e.error.asInstanceOf[Error].labelMessage(labelOpt)
           case _ => labelOpt.fold(lowPriorityMessage.filter(_.nonEmpty).getOrElse(pureMessage(this)))(label =>
             lowPriorityLabelMessage(label).filter(_.nonEmpty)
