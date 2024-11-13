@@ -107,6 +107,14 @@ object Error extends Error with ErrorInstances:
       case e: Throwable => JavaThrowable(e)
       case _ => Pure(error)
 
+  @tailrec def base[E](error: E): Error =
+    error match
+      case e: com.peknight.error.Errors[?] if e.errors.tail.isEmpty => base(e.errors.head)
+      case e: com.peknight.error.Lift[?] => base(e.error)
+      case e: Error => e
+      case e: Throwable => JavaThrowable(e)
+      case _ => Pure(error)
+
   def apply: Error = Success
   def apply[E](error: E): Error =
     given [A]: CanEqual[List[A], E] = CanEqual.derived
@@ -126,12 +134,11 @@ object Error extends Error with ErrorInstances:
   def errorClass[E](clazz: Class[E]): String =
     clazz.getSimpleName.replaceAll("\\$", "")
 
-
-  @tailrec def pureMessage[E](e: E): String =
-    pure(e) match
+  def pureMessage[E](e: E): String =
+    base(e) match
       case err: Lift[?] => err.error match
         case m: String => m
-        case t: Throwable => t.getMessage
-        case error => pureMessage(error)
-      case err => s"${errorType(err)}:$err"
+        case t: JavaThrowable[?] => t.error.getMessage
+        case error => s"${errorType(err)}:$err"
+      case err => errorType(err)
 end Error
