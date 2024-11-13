@@ -133,5 +133,5 @@ object Error extends Error with ErrorInstances:
         case m: String => m
         case t: Throwable => t.getMessage
         case error => pureMessage(error)
-      case _ => errorType(e)
+      case err => s"${errorType(err)}:$err"
 end Error
