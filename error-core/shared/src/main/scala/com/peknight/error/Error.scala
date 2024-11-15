@@ -138,7 +138,7 @@ object Error extends Error with ErrorInstances:
     base(e) match
       case err: Lift[?] => err.error match
         case m: String => m
-        case t: Throwable => t.getMessage
-        case error => s"${errorType(err)}:$err"
+        case t: Throwable => s"${errorType(t)}:${t.getMessage}"
+        case error => s"${errorType(error)}:$error"
       case err => errorType(err)
 end Error
