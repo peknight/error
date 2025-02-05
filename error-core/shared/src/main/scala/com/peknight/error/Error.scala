@@ -2,9 +2,11 @@ package com.peknight.error
 
 import cats.data.NonEmptyList
 import cats.syntax.option.*
+import cats.syntax.show.*
+import com.peknight.cats.instances.clazz.clazz.given
 import com.peknight.error.Error.{Common, Pure, pureMessage}
 import com.peknight.error.instances.ErrorInstances
-import com.peknight.error.std.JavaThrowable
+import com.peknight.error.std.{JavaThrowable, StandardError}
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -14,6 +16,8 @@ trait Error extends Exception with Serializable derives CanEqual:
   def messages: List[String] = List(message)
   def cause: Option[Error] = None
   def success: Boolean = false
+  def errorType: String = Error.errorType(this)
+  def standard: StandardError = StandardError(errorType, message)
   protected def pure: Error = Error.pure(this)
   protected def labelOption: Option[String] = None
   protected def messageOption: Option[String] = None
@@ -36,8 +40,6 @@ trait Error extends Exception with Serializable derives CanEqual:
               .getOrElse(s"$label: ${pureMessage(this)}")
           )
   end labelMessage
-  
-  
 
   def label(label: String): Error =
     val labelOpt = label.some.filter(_.nonEmpty)
@@ -78,13 +80,9 @@ trait Error extends Exception with Serializable derives CanEqual:
     case _ => Common(this, value = value.some, cause = cause)
 
   def *:[T](value: T): Error = prepended(value)
-
   def to[E](error: E): Error = Common(error, cause = Some(this))
-
   override final def fillInStackTrace(): Throwable = this
-
   override final def getMessage: String = message
-
   override def getCause: Throwable = cause.filter(_.ne(this)).orNull
 end Error
 
@@ -101,8 +99,8 @@ object Error extends Error with ErrorInstances:
 
   @tailrec def pure[E](error: E): Error =
     error match
-      case e: com.peknight.error.Pure[?] => pure(e.error)
       case e: com.peknight.error.Errors[?] if e.errors.tail.isEmpty => pure(e.errors.head)
+      case e: com.peknight.error.Pure[?] => pure(e.error)
       case e: Error => e
       case e: Throwable => JavaThrowable(e)
       case _ => Pure(error)
@@ -129,16 +127,20 @@ object Error extends Error with ErrorInstances:
     if tail.isEmpty then pure(head)
     else Errors(NonEmptyList(pure(head), tail.map(pure)))
 
-  def errorClassTag[E](using classTag: ClassTag[E]): String = errorClass(classTag.runtimeClass)
-  def errorType[E](e: E): String = errorClass(e.getClass)
-  def errorClass[E](clazz: Class[E]): String =
-    clazz.getSimpleName.replaceAll("\\$", "")
+  def showClassTag[E](using classTag: ClassTag[E]): String = classTag.runtimeClass.show
+  def showType[E](e: E): String = e.getClass.show
+  def showClass[E](clazz: Class[E]): String = clazz.show
+
+  def errorType[E](e: E): String =
+    base(e) match
+      case err: Lift[?] => showType(err.error)
+      case err => showType(err)
 
   def pureMessage[E](e: E): String =
     base(e) match
       case err: Lift[?] => err.error match
         case m: String => m
-        case t: Throwable => s"${errorType(t)}:${t.getMessage}"
-        case error => s"${errorType(error)}:$error"
-      case err => errorType(err)
+        case t: Throwable => s"${showType(t)}:${t.getMessage}"
+        case error => s"${showType(error)}:$error"
+      case err => showType(err)
 end Error
