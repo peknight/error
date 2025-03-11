@@ -2,15 +2,13 @@ package com.peknight.error.collection
 
 import cats.Show
 import cats.syntax.show.*
-import com.peknight.error.Error
 
-trait CollectionNoInteraction[A, C1 <: IterableOnce[A], C2 <: IterableOnce[A]] extends Error:
+trait CollectionNoInteraction[A, C1 <: IterableOnce[A], C2 <: IterableOnce[A]] extends CollectionError:
   def actual: C1
   def expected: C2
 end CollectionNoInteraction
 object CollectionNoInteraction:
-  private case class CollectionNoInteraction[A, C1 <: IterableOnce[A], C2 <: IterableOnce[A]](actual: C1, expected: C2)
-                                                                                             (using Show[A])
+  private case class CollectionNoInteraction[A: Show, C1 <: IterableOnce[A], C2 <: IterableOnce[A]](actual: C1, expected: C2)
     extends com.peknight.error.collection.CollectionNoInteraction[A, C1, C2]:
     override protected def lowPriorityMessage: Option[String] =
       Some(s"[${actual.iterator.map(_.show).mkString(", ")}] has no interaction with [${expected.iterator.map(_.show).mkString(", ")}]")

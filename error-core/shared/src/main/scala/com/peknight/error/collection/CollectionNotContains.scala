@@ -2,9 +2,8 @@ package com.peknight.error.collection
 
 import cats.Show
 import cats.syntax.show.*
-import com.peknight.error.{Error, collection}
 
-trait CollectionNotContains[A, C <: IterableOnce[A]] extends Error:
+trait CollectionNotContains[A, C <: IterableOnce[A]] extends CollectionError:
   def value: A
   def collection: C
 end CollectionNotContains
