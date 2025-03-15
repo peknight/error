@@ -133,6 +133,7 @@ object Error extends Error with ErrorInstances:
 
   def errorType[E](e: E): String =
     base(e) match
+      case err: Lift[?] if err.error.isInstanceOf[String] => err.error.asInstanceOf[String]
       case err: Lift[?] => showType(err.error)
       case err => showType(err)
 
