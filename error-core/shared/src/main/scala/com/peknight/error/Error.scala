@@ -112,6 +112,11 @@ object Error extends Error with ErrorInstances:
       case e: Error => e
       case e: Throwable => JavaThrowable(e)
       case _ => Pure(error)
+      
+  def throwable[E](error: E): Option[Throwable] =
+    base(error) match
+      case e: JavaThrowable[?] => Some(e.error)
+      case _ => None
 
   def apply: Error = Success
   def apply[E](error: E): Error =
@@ -134,7 +139,9 @@ object Error extends Error with ErrorInstances:
   def errorType[E](e: E): String =
     base(e) match
       case err: Lift[?] if err.error.isInstanceOf[String] => err.error.asInstanceOf[String]
-      case err: Lift[?] => showType(err.error)
+      case err: Lift[?] => err.error match
+        case m: String => m
+        case error => showType(error)
       case err => showType(err)
 
   def pureMessage[E](e: E): String =
