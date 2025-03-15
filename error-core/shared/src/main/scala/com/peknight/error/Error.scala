@@ -17,6 +17,7 @@ trait Error extends Exception with Serializable derives CanEqual:
   def cause: Option[Error] = None
   def success: Boolean = false
   def errorType: String = Error.errorType(this)
+  def throwable: Option[Throwable] = Error.throwable(this)
   def standard: StandardError = StandardError(errorType, message)
   protected def pure: Error = Error.pure(this)
   protected def labelOption: Option[String] = None
@@ -112,7 +113,7 @@ object Error extends Error with ErrorInstances:
       case e: Error => e
       case e: Throwable => JavaThrowable(e)
       case _ => Pure(error)
-      
+
   def throwable[E](error: E): Option[Throwable] =
     base(error) match
       case e: JavaThrowable[?] => Some(e.error)
