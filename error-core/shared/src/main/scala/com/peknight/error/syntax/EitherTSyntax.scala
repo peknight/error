@@ -1,7 +1,7 @@
 package com.peknight.error.syntax
 
-import cats.Functor
 import cats.syntax.functor.*
+import cats.{Functor, Show}
 import com.peknight.error.Error
 
 trait EitherTSyntax:
@@ -12,10 +12,10 @@ trait EitherTSyntax:
       fe.map(_.left.map(e => Error(e).prependLabel(label)))
     def message(message: => String)(using Functor[F]): F[Either[Error, B]] =
       fe.map(_.left.map(e => Error(e).message(message)))
-    def value[T](value: => T)(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).value(value)))
-    def prepended[T](value: => T)(using Functor[F]): F[Either[Error, B]] =
+    def value[C](value: => C)(using Functor[F], Show[C]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).value(value)))
+    def prepended[C](value: => C)(using Functor[F], Show[C]): F[Either[Error, B]] =
       fe.map(_.left.map(e => Error(e).prepended(value)))
-    def *:[T](value: => T)(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).prepended(value)))
+    def *:[C](value: => C)(using Functor[F], Show[C]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).prepended(value)))
     def to(error: => Error)(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).to(error)))
   end extension
 end EitherTSyntax

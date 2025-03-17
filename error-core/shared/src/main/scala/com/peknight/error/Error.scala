@@ -3,6 +3,7 @@ package com.peknight.error
 import cats.data.NonEmptyList
 import cats.syntax.option.*
 import cats.syntax.show.*
+import cats.{Eval, Show}
 import com.peknight.cats.instances.clazz.clazz.given
 import com.peknight.error.Error.{Common, Pure, pureMessage}
 import com.peknight.error.instances.ErrorInstances
@@ -18,6 +19,7 @@ trait Error extends Exception with Serializable derives CanEqual:
   def success: Boolean = false
   def errorType: String = Error.errorType(this)
   def throwable: Option[Throwable] = Error.throwable(this)
+  def showValue: Option[String] = None
   def standard: StandardError = StandardError(errorType, message)
   protected def pure: Error = Error.pure(this)
   protected def labelOption: Option[String] = None
@@ -68,19 +70,21 @@ trait Error extends Exception with Serializable derives CanEqual:
         case _ => Common(this, messageOption = messageOpt, cause = cause)
   end message
 
-  def value[T](value: T): Error = pure match
-    case Pure(e) => Common(e, value = value.some, cause = cause)
-    case c @ Common(_, _, _, _, _) => c.copy(value = value.some)
-    case _ => Common(this, value = value.some, cause = cause)
+  def value[A](value: A)(using show: Show[A]): Error = pure match
+    case Pure(e) => Common(e, valueShow = (value, Eval.later(show.show(value))).some, cause = cause)
+    case c @ Common(_, _, _, _, _) => c.copy(valueShow = (value, Eval.later(show.show(value))).some)
+    case _ => Common(this, valueShow = (value, Eval.later(show.show(value))).some, cause = cause)
 
-  def prepended[T](value: T): Error = pure match
-    case Pure(e) => Common(e, value = value.some, cause = cause)
-    case c @ Common(_, _, _, None, _) => c.copy(value = value.some)
-    case c @ Common(_, _, _, Some(t: Tuple), _) => c.copy(value = (value *: t).some)
-    case c @ Common(_, _, _, Some(v), _) => c.copy(value = (value *: v *: EmptyTuple).some)
-    case _ => Common(this, value = value.some, cause = cause)
+  def prepended[A](value: A)(using show: Show[A]): Error = pure match
+    case Pure(e) => Common(e, valueShow = (value, Eval.later(show.show(value))).some, cause = cause)
+    case c @ Common(_, _, _, None, _) => c.copy(valueShow = (value, Eval.later(show.show(value))).some)
+    case c @ Common(_, _, _, Some((t: Tuple, eval)), _) => 
+      c.copy(valueShow = (value *: t, eval.flatMap(s => Eval.later(s"${show.show(value)},$s"))).some)
+    case c @ Common(_, _, _, Some((v, eval)), _) => 
+      c.copy(valueShow = (value *: v *: EmptyTuple, eval.flatMap(s => Eval.later(s"${show.show(value)},$s"))).some)
+    case _ => Common(this, valueShow = (value, Eval.later(show.show(value))).some, cause = cause)
 
-  def *:[T](value: T): Error = prepended(value)
+  def *:[A](value: A)(using show: Show[A]): Error = prepended(value)
   def to[E](error: E): Error = Common(error, cause = Some(this))
   override final def fillInStackTrace(): Throwable = this
   override final def getMessage: String = message
@@ -90,13 +94,13 @@ end Error
 object Error extends Error with ErrorInstances:
   private[error] case class Pure[+E](error: E) extends com.peknight.error.Pure[E]
   private[error] case class Errors(errors: NonEmptyList[Error]) extends com.peknight.error.Errors[Error]
-  private[error] case class Common[+E, +T](
-    error: E,
-    override val labelOption: Option[String] = None,
-    override val messageOption: Option[String] = None,
-    value: Option[T] = None,
-    override val cause: Option[Error] = None
-  ) extends com.peknight.error.Common[E, T]
+  private[error] case class Common[+E, A](
+                                           error: E,
+                                           override val labelOption: Option[String] = None,
+                                           override val messageOption: Option[String] = None,
+                                           valueShow: Option[(A, Eval[String])] = None,
+                                           override val cause: Option[Error] = None
+  ) extends com.peknight.error.Common[E, A]
 
   @tailrec def pure[E](error: E): Error =
     error match
