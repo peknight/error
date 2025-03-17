@@ -16,9 +16,10 @@ trait Error extends Exception with Serializable derives CanEqual:
   def message: String = labelMessage(None)
   def messages: List[String] = List(message)
   def cause: Option[Error] = None
-  def success: Boolean = Error.base(this) match
-    case error: Success => true
-    case _ => false
+  def success: Boolean =
+    Error.base(this) match
+      case error: Success => true
+      case _ => false
   def errorType: String = Error.errorType(this)
   def throwable: Option[Throwable] = Error.throwable(this)
   def showValue: Option[String] = None
