@@ -4,7 +4,7 @@ import cats.syntax.functor.*
 import cats.{Functor, Show}
 import com.peknight.error.Error
 
-trait EitherTSyntax:
+trait EitherFSyntax:
   extension [F[_], A, B] (fe: F[Either[A, B]])
     def asError(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(Error.apply))
     def label(label: => String)(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).label(label)))
@@ -18,5 +18,5 @@ trait EitherTSyntax:
     def *:[C](value: => C)(using Functor[F], Show[C]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).prepended(value)))
     def to(error: => Error)(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).to(error)))
   end extension
-end EitherTSyntax
-object EitherTSyntax extends EitherTSyntax
+end EitherFSyntax
+object EitherFSyntax extends EitherFSyntax
