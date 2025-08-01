@@ -1,6 +1,6 @@
 package com.peknight.error.syntax
 
-import cats.data.EitherT
+import cats.data.{EitherT, Ior, IorT}
 import cats.syntax.applicativeError.*
 import cats.syntax.functor.*
 import cats.{ApplicativeError, Show}
@@ -10,8 +10,12 @@ trait ApplicativeErrorSyntax:
   extension [F[_], A] (fa: F[A])
     def asError(using ApplicativeError[F, Throwable]): F[Either[Error, A]] =
       fa.attempt.map(_.left.map(Error.apply))
+    def iorError(using ApplicativeError[F, Throwable]): F[Ior[Error, A]] =
+      fa.attempt.map(_.fold(e => Ior.left(Error(e)), Ior.right))
     def faeLiftET(using ApplicativeError[F, Throwable]): EitherT[F, Error, A] =
       EitherT(fa.attempt.map(_.left.map(Error.apply)))
+    def faeLiftIT(using ApplicativeError[F, Throwable]): IorT[F, Error, A] =
+      IorT(fa.attempt.map(_.fold(e => Ior.left(Error(e)), Ior.right)))
     def label(label: => String)(using ApplicativeError[F, Throwable]): F[Either[Error, A]] =
       fa.attempt.map(_.left.map(e => Error(e).label(label)))
     def prependLabel(label: => String)(using ApplicativeError[F, Throwable]): F[Either[Error, A]] =
