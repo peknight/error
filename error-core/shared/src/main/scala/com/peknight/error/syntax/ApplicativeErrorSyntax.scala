@@ -10,11 +10,11 @@ trait ApplicativeErrorSyntax:
   extension [F[_], A] (fa: F[A])
     def asError(using ApplicativeError[F, Throwable]): F[Either[Error, A]] =
       fa.attempt.map(_.left.map(Error.apply))
-    def iorError(using ApplicativeError[F, Throwable]): F[Ior[Error, A]] =
+    def asErrorIor(using ApplicativeError[F, Throwable]): F[Ior[Error, A]] =
       fa.attempt.map(_.fold(e => Ior.left(Error(e)), Ior.right))
-    def faeLiftET(using ApplicativeError[F, Throwable]): EitherT[F, Error, A] =
+    def asET(using ApplicativeError[F, Throwable]): EitherT[F, Error, A] =
       EitherT(fa.attempt.map(_.left.map(Error.apply)))
-    def faeLiftIT(using ApplicativeError[F, Throwable]): IorT[F, Error, A] =
+    def asIT(using ApplicativeError[F, Throwable]): IorT[F, Error, A] =
       IorT(fa.attempt.map(_.fold(e => Ior.left(Error(e)), Ior.right)))
     def label(label: => String)(using ApplicativeError[F, Throwable]): F[Either[Error, A]] =
       fa.attempt.map(_.left.map(e => Error(e).label(label)))
@@ -35,9 +35,19 @@ trait ApplicativeErrorSyntax:
   extension [F[_], E, A] (fa: F[Either[E, A]])
     def aeAsError(using ApplicativeError[F, Throwable]): F[Either[Error, A]] =
       fa.attempt.map(_.flatten.left.map(Error.apply))
-    def aeLiftET(using ApplicativeError[F, Throwable]): EitherT[F, Error, A] =
+    def aeAsErrorIor(using ApplicativeError[F, Throwable]): F[Ior[Error, A]] =
+      fa.attempt.map(_.flatten.fold(e => Ior.left(Error(e)), Ior.right))
+    def aeAsET(using ApplicativeError[F, Throwable]): EitherT[F, Error, A] =
       EitherT(fa.attempt.map(_.flatten.left.map(Error.apply)))
+    def aeAsIT(using ApplicativeError[F, Throwable]): IorT[F, Error, A] =
+      IorT(fa.attempt.map(_.flatten.fold(e => Ior.left(Error(e)), Ior.right)))
   end extension
 
+  extension [F[_], E, A] (fa: F[Ior[E, A]])
+    def aeiAsError(using ApplicativeError[F, Throwable]): F[Ior[Error, A]] =
+      fa.attempt.map(_.fold(e => Ior.left(Error(e)), _.leftMap(Error.apply)))
+    def aeiAsIT(using ApplicativeError[F, Throwable]): IorT[F, Error, A] =
+      IorT(fa.attempt.map(_.fold(e => Ior.left(Error(e)), _.leftMap(Error.apply))))
+  end extension
 end ApplicativeErrorSyntax
 object ApplicativeErrorSyntax extends ApplicativeErrorSyntax

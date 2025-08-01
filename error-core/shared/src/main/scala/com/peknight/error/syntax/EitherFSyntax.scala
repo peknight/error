@@ -8,7 +8,7 @@ import com.peknight.error.Error
 trait EitherFSyntax:
   extension [F[_], A, B] (fe: F[Either[A, B]])
     def asError(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(Error.apply))
-    def iorError(using Functor[F]): F[Ior[Error, B]] = fe.map(_.fold(a => Ior.left(Error(a)), Ior.right))
+    def asErrorIor(using Functor[F]): F[Ior[Error, B]] = fe.map(_.fold(a => Ior.left(Error(a)), Ior.right))
     def label(label: => String)(using Functor[F]): F[Either[Error, B]] = fe.map(_.left.map(e => Error(e).label(label)))
     def prependLabel(label: => String)(using Functor[F]): F[Either[Error, B]] =
       fe.map(_.left.map(e => Error(e).prependLabel(label)))
