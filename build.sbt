@@ -4,6 +4,7 @@ import com.peknight.build.sbt.*
 commonSettings
 
 lazy val error = (project in file("."))
+  .settings(name := "error")
   .aggregate(
     errorCore.jvm,
     errorCore.js,
@@ -11,19 +12,12 @@ lazy val error = (project in file("."))
     errorSpire.jvm,
     errorSpire.js,
   )
-  .settings(
-    name := "error",
-  )
 
 lazy val errorCore = (crossProject(JVMPlatform, JSPlatform, NativePlatform) in file("error-core"))
+  .settings(name := "error-core")
   .settings(crossDependencies(peknight.instances.cats.clazz))
-  .settings(
-    name := "error-core",
-  )
 
 lazy val errorSpire = (crossProject(JVMPlatform, JSPlatform) in file("error-spire"))
   .dependsOn(errorCore)
+  .settings(name := "error-spire")
   .settings(crossDependencies(typelevel.spire))
-  .settings(
-    name := "error-spire",
-  )
