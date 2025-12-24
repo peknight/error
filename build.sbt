@@ -15,7 +15,7 @@ lazy val error = (project in file("."))
 
 lazy val errorCore = (crossProject(JVMPlatform, JSPlatform, NativePlatform) in file("error-core"))
   .settings(name := "error-core")
-  .settings(crossDependencies(peknight.instances.cats.clazz))
+  .settings(crossDependencies(peknight.cats))
 
 lazy val errorSpire = (crossProject(JVMPlatform, JSPlatform) in file("error-spire"))
   .dependsOn(errorCore)

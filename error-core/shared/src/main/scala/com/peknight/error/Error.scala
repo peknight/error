@@ -4,7 +4,7 @@ import cats.data.NonEmptyList
 import cats.syntax.option.*
 import cats.syntax.show.*
 import cats.{Eval, Show}
-import com.peknight.cats.instances.clazz.clazz.given
+import com.peknight.cats.instances.clazz.given
 import com.peknight.error.Error.{Common, Pure, pureMessage}
 import com.peknight.error.instances.ErrorInstances
 import com.peknight.error.std.{JavaThrowable, StandardError}
